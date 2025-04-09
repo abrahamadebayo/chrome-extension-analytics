@@ -1,0 +1,9 @@
+FastAPI
+uvicorn
+sqlalchemy
+asyncpg
+pydantic
+httpx
+databases
+python-dotenv
+psycopg2-binary

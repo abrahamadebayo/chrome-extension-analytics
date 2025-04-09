@@ -1,0 +1,4 @@
+chrome-extension-analytics.code-workspace
+frontend/node_modules
+frontend/.env
+frontend/build/*
