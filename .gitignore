@@ -12,3 +12,6 @@ backend/app/tests/__pycache__/*
 backend/app/repositories/__pycache__/*
 backend/.env
 frontend/package-lock.json
+
+# Environment variables
+.env
