@@ -168,7 +168,7 @@ chrome-extension-analytics
 
 ### Chrome Extension Preview
 
-Below is a preview of the Chrome Extension Analytics in action:
+Below are previews of the Chrome Extension Analytics in action:
 
 ![Chrome Extension Preview](frontend/public/images/extension_preview-1.png)
 
