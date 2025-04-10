@@ -7,3 +7,6 @@ httpx
 databases
 python-dotenv
 psycopg2-binary
+alembic
+pytest
+pytest-asyncio
