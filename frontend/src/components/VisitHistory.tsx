@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export interface Visit {
   datetime_visited: string;
@@ -14,40 +14,74 @@ interface VisitHistoryProps {
 }
 
 const VisitHistory: React.FC<VisitHistoryProps> = ({ history }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  // Filter history based on search term
+  const filteredHistory = history.filter(visit => 
+    visit.url.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="visit-history">
-      <h2>Visit History</h2>
-      {history.length > 0 ? (
+    <div className="visit-history card">
+      <h2>
+        Visit History
+        <span style={{ fontSize: '0.9em', fontWeight: 'normal' }}>
+          {history.length} visits
+        </span>
+      </h2>
+      
+      <div className="search-box">
+        <span className="search-icon">🔍</span>
+        <input 
+          type="text"
+          placeholder="Search by URL..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+      
+      {filteredHistory.length > 0 ? (
         <ul className="visit-history-list">
-          {history.map((visit, index) => (
+          {filteredHistory.map((visit, index) => (
             <li key={index} className="visit-history-item">
               <div className="visit-history-item-header">
                 <span className="visit-history-date">
                   {new Date(visit.datetime_visited).toLocaleString()}
                 </span>
                 <span className="visit-history-total">
-                  Total Visits: {visit.total_visits}
+                  {visit.total_visits} visits
                 </span>
               </div>
-              <div className="visit-history-item-body">
-                <p>
-                  <strong>URL:</strong> {visit.url}
-                </p>
-                <p>
-                  <strong>Links:</strong> {visit.link_count}
-                </p>
-                <p>
-                  <strong>Words:</strong> {visit.word_count}
-                </p>
-                <p>
-                  <strong>Images:</strong> {visit.image_count}
-                </p>
+              
+              <div className="visit-history-url">
+                {visit.url}
+              </div>
+              
+              <div className="visit-history-metrics">
+                <div className="visit-history-metric">
+                  <div className="visit-history-metric-value">{visit.link_count}</div>
+                  <div>Links</div>
+                </div>
+                <div className="visit-history-metric">
+                  <div className="visit-history-metric-value">{visit.word_count}</div>
+                  <div>Words</div>
+                </div>
+                <div className="visit-history-metric">
+                  <div className="visit-history-metric-value">{visit.image_count}</div>
+                  <div>Images</div>
+                </div>
               </div>
             </li>
           ))}
         </ul>
       ) : (
-        <p>No visit history available.</p>
+        <div className="empty-state">
+          {searchTerm ? (
+            <p>No visits match your search for "{searchTerm}"</p>
+          ) : (
+            <p>No visit history available</p>
+          )}
+        </div>
       )}
     </div>
   );

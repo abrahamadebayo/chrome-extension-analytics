@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import AnalyticsPanel from './components/AnalyticsPanel';
 import VisitHistory from './components/VisitHistory';
+import './styles/App.css';
 
 export interface AnalyticsData {
   datetime_visited: string;
@@ -21,61 +22,94 @@ export interface Visit {
 }
 
 const App: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'metrics' | 'history'>('metrics');
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [visitHistory, setVisitHistory] = useState<Visit[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Fetch current analytics data
-    const fetchAnalytics = async () => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      
       try {
-        const response = await fetch('http://localhost:8000/api/analytics/current');
-        if (response.status === 404) {
-          console.warn("No current metrics available.");
-          setAnalyticsData(null);
-          return;
+        // Fetch current analytics data
+        const metricsResponse = await fetch('http://localhost:8000/api/analytics/current');
+        if (metricsResponse.status !== 404) {
+          if (!metricsResponse.ok) {
+            throw new Error(`HTTP error! status: ${metricsResponse.status}`);
+          }
+          const metricsData = await metricsResponse.json();
+          setAnalyticsData(metricsData);
         }
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        
+        // Fetch visit history data
+        const historyResponse = await fetch('http://localhost:8000/api/analytics/history');
+        if (!historyResponse.ok && historyResponse.status !== 404) {
+          throw new Error(`HTTP error! status: ${historyResponse.status}`);
         }
-        const data = await response.json();
-        setAnalyticsData(data);
-      } catch (error) {
-        console.error("Error fetching current metrics:", error);
-        setAnalyticsData(null);
+        if (historyResponse.status !== 404) {
+          const historyData = await historyResponse.json();
+          setVisitHistory(historyData);
+        }
+      } catch (error: any) {
+        console.error("Error fetching data:", error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
       }
     };
 
-    // Fetch visit history data
-    const fetchHistory = async () => {
-      try {
-        const response = await fetch('http://localhost:8000/api/analytics/history');
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        setVisitHistory(data);
-      } catch (error) {
-        console.error("Error fetching visit history:", error);
-        setVisitHistory([]);
-      }
-    };
-
-    fetchAnalytics();
-    fetchHistory();
+    fetchData();
   }, []);
 
   return (
     <div className="App">
-      <h1>Chrome Extension Analytics</h1>
-      {analyticsData ? (
-        <AnalyticsPanel data={analyticsData} />
+      <h1>Chrome Analytics</h1>
+      
+      <div className="tabs">
+        <div 
+          className={`tab ${activeTab === 'metrics' ? 'active' : ''}`}
+          onClick={() => setActiveTab('metrics')}
+        >
+          Current Metrics
+        </div>
+        <div 
+          className={`tab ${activeTab === 'history' ? 'active' : ''}`}
+          onClick={() => setActiveTab('history')}
+        >
+          Visit History
+        </div>
+      </div>
+      
+      {loading ? (
+        <div className="loading">
+          <div className="loading-spinner"></div>
+          <p>Loading analytics data...</p>
+        </div>
+      ) : error ? (
+        <div className="card">
+          <p>Error: {error}</p>
+          <p>Please make sure the backend server is running.</p>
+        </div>
       ) : (
-        <p>No current analytics data available.</p>
-      )}
-      {visitHistory.length > 0 ? (
-        <VisitHistory history={visitHistory} />
-      ) : (
-        <p>No visit history available.</p>
+        <>
+          {activeTab === 'metrics' && (
+            analyticsData ? (
+              <AnalyticsPanel data={analyticsData} />
+            ) : (
+              <div className="card empty-state">
+                <p>No analytics data available for the current page.</p>
+                <p>Visit some pages to collect analytics.</p>
+              </div>
+            )
+          )}
+          
+          {activeTab === 'history' && (
+            <VisitHistory history={visitHistory} />
+          )}
+        </>
       )}
     </div>
   );
