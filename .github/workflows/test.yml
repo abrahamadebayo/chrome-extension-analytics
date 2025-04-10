@@ -61,6 +61,9 @@ jobs:
         # Fix the API endpoint paths
         sed -i 's|client.post("/api/"|client.post("/api/analytics/"|g' app/tests/test_api_endpoints.py
         sed -i 's|client.get("/api/"|client.get("/api/analytics/"|g' app/tests/test_api_endpoints.py
+        sed -i 's|client.get("/api/current"|client.get("/api/analytics/current"|g' app/tests/test_api_endpoints.py
+        sed -i 's|client.get("/api/url/|client.get("/api/analytics/url/|g' app/tests/test_api_endpoints.py
+        sed -i 's|client.get("/api/history"|client.get("/api/analytics/history"|g' app/tests/test_api_endpoints.py
         
         echo "Modified test file content:"
         grep -n "/api/" app/tests/test_api_endpoints.py
