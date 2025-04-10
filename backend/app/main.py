@@ -33,7 +33,7 @@ app.add_middleware(
 )
 
 # Include the analytics router with a prefix
-app.include_router(analytics_router, prefix="/api")
+app.include_router(analytics_router, prefix="/api/analytics")
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
