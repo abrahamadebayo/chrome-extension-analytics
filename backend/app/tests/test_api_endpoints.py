@@ -35,7 +35,17 @@ async def test_create_or_update_and_get_current(async_client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_get_by_url_and_history(async_client: AsyncClient):
-    # Create another visit record for a different URL.
+    # Create first visit record
+    payload1 = {
+       "url": "http://example.com/test",
+       "link_count": 10,
+       "word_count": 200,
+       "image_count": 5
+    }
+    response_1 = await async_client.post("/api/", json=payload1)
+    assert response_1.status_code == 200
+    
+    # Create second visit record for a different URL
     payload2 = {
        "url": "http://example.com/test2",
        "link_count": 5,
@@ -45,17 +55,17 @@ async def test_get_by_url_and_history(async_client: AsyncClient):
     response_2 = await async_client.post("/api/", json=payload2)
     assert response_2.status_code == 200
 
-    # Test GET endpoint for a specific URL.
+    # Test GET endpoint for a specific URL
     response_by_url = await async_client.get("/api/url/http://example.com/test2")
     assert response_by_url.status_code == 200
     url_data = response_by_url.json()
     assert url_data["url"] == "http://example.com/test2"
 
-    # Test GET /history endpoint.
+    # Test GET /history endpoint
     response_history = await async_client.get("/api/history")
     assert response_history.status_code == 200
     history_data = response_history.json()
-    # Expect two unique records: one for "/test" and one for "/test2".
+    # Expect two unique records: one for "/test" and one for "/test2"
     assert len(history_data) == 2
     urls = {visit["url"] for visit in history_data}
     assert urls == {"http://example.com/test", "http://example.com/test2"}

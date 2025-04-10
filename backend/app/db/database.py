@@ -38,9 +38,3 @@ async def get_db() -> AsyncSession:
         yield session
     finally:
         await session.close()
-
-def override_get_db(db_session: AsyncSession):
-    """Override for testing purposes."""
-    async def _get_db():
-        yield db_session
-    return _get_db

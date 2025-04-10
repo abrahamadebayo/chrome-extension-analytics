@@ -6,7 +6,7 @@ import pytest
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from app.db.database import get_db, override_get_db
+from app.db.database import get_db
 from app.main import app
 from app.core.models import Base, PageVisit
 
@@ -41,9 +41,8 @@ async def session() -> AsyncSession:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     
+    # Create a test session
     async with TestingSessionLocal() as session:
-        # Override the database dependency
-        app.dependency_overrides[get_db] = lambda: override_get_db(session)
         yield session
     
     # Clean up - drop all tables after test
@@ -53,7 +52,17 @@ async def session() -> AsyncSession:
 @pytest_asyncio.fixture
 async def async_client(session) -> AsyncClient:
     """Get a test client for the FastAPI app."""
+    # Define an override for the get_db dependency
+    async def override_get_db():
+        yield session
+    
+    # Register the override
+    app.dependency_overrides[get_db] = override_get_db
+    
     # Use ASGITransport for newer versions of httpx
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         yield client
+
+    # Remove the override after the test
+    app.dependency_overrides.pop(get_db, None)
