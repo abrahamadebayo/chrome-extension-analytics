@@ -8,17 +8,22 @@ This project is a Chrome extension that provides analytics on web pages visited 
 chrome-extension-analytics
 ├── backend
 │   ├── app
-│   │   ├── api
-│   │   │   ├── v1
-│   │   │   │   ├── endpoints
-│   │   │   │   │   └── analytics.py   # Analytics API endpoints (create/update, current metrics, history)
-│   │   │   │   └── __init__.py
+│   │   ├── core/
+│   │   │   ├── models.py      # Database models using SQLAlchemy
+│   │   │   ├── schemas.py     # Pydantic schemas for request/response validation
 │   │   │   └── __init__.py
-│   │   ├── database.py        # Database connection and session management
-│   │   ├── main.py            # FastAPI entry point; includes routes and database initialization
-│   │   ├── models.py          # SQLAlchemy models for defining database schema
-│   │   ├── schemas.py         # Pydantic schemas for request/response validation
-│   │   └── __init__.py
+│   │   ├── db/
+│   │   │   ├── database.py    # Database connection and session management
+│   │   │   ├── init_db.py     # Database initialization script
+│   │   │   └── __init__.py
+│   │   ├── repositories/      # Data access layer
+│   │   │   └── analytics_repository.py
+│   │   ├── routers/           # API route definitions
+│   │   │   └── analytics.py   # Analytics endpoints
+│   │   ├── services/          # Business logic layer
+│   │   │   └── analytics_service.py
+│   │   ├── main.py            # FastAPI entry point
+│   │   └── tests/             # Test suite
 │   ├── Dockerfile             # Dockerfile to containerize the FastAPI backend
 │   ├── requirements.txt       # Python package dependencies for the backend
 │   └── README.md              # Backend-specific instructions
@@ -27,21 +32,35 @@ chrome-extension-analytics
 │   ├── node_modules           # Installed npm dependencies
 │   ├── public
 │   │   ├── images
-│   │   │   └── extension_preview.png  # Screenshot of the extension in action
+│   │   │   └── extension_preview-1.png  # Screenshot of the extension in action
+│   │   │   └── extension_preview-2.png  # Screenshot of the extension in action
 │   │   ├── background.js      # Background script for handling extension events
 │   │   ├── content.js         # Content script for extracting page metrics
 │   │   ├── icon.png           # Extension icon
 │   │   ├── index.html         # HTML file for the popup UI
 │   │   └── manifest.json      # Chrome extension manifest
 │   ├── src
-│   │   ├── components
-│   │   │   ├── AnalyticsPanel.tsx  # Displays current page metrics
-│   │   │   └── VisitHistory.tsx    # Lists past visit records
-│   │   ├── styles
+│   │   ├── features/          # Feature-based modules
+│   │   │   ├── analytics/     # Analytics feature components and context
+│   │   │   │   ├── components/
+│   │   │   │   │   └── AnalyticsPanel.tsx  # Displays current page metrics
+│   │   │   │   └── analytics-context.tsx   # State management for analytics
+│   │   │   └── history/       # History feature components
+│   │   │       └── components/
+│   │   │           └── VisitHistory.tsx    # Lists past visit records
+│   │   ├── shared/            # Shared components and utilities
+│   │   │   ├── components/    # Reusable UI components
+│   │   │   ├── hooks/         # Custom React hooks
+│   │   │   └── utils/         # Utility functions
+│   │   ├── services/          # API and other services
+│   │   │   └── api/           # API client and endpoints
+│   │   │       ├── api-client.ts      # Axios instance with interceptors
+│   │   │       └── analytics-api.ts   # Analytics API methods
+│   │   ├── types/             # TypeScript type definitions
+│   │   ├── styles/            # Global styles
 │   │   │   └── App.css        # Styles for the React application
 │   │   ├── App.tsx            # Main React component for the analytics UI
-│   │   ├── index.tsx          # Entry point for the React app
-│   │   └── react-app-env.d.ts # TypeScript environment definitions
+│   │   └── index.tsx          # Entry point for the React app
 │   ├── package.json           # npm configuration file with build and development scripts
 │   ├── tsconfig.json          # TypeScript configuration file
 │   └── README.md              # Frontend-specific instructions
@@ -151,7 +170,9 @@ chrome-extension-analytics
 
 Below is a preview of the Chrome Extension Analytics in action:
 
-![Chrome Extension Preview](frontend/public/images/extension_preview.png)
+![Chrome Extension Preview](frontend/public/images/extension_preview-1.png)
+
+![Chrome Extension Preview](frontend/public/images/extension_preview-2.png)
 
 ## Notes
 

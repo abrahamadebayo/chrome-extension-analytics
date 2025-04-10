@@ -23,6 +23,9 @@ const AnalyticsApp: React.FC = () => {
     refreshData(true); // Force refresh from server
   };
 
+  // Use process.env.NODE_ENV instead of import.meta.env.DEV
+  const isDevelopment = process.env.NODE_ENV === 'development';
+
   return (
     <div className="App">
       <header className="app-header">
@@ -48,7 +51,7 @@ const AnalyticsApp: React.FC = () => {
         <ErrorFallback 
           error={error} 
           retry={() => refreshData(true)}
-          details={import.meta.env.DEV ? `Failed to load data from API: ${error}` : undefined}
+          details={isDevelopment ? `Failed to load data from API: ${error}` : undefined}
         />
       )}
       
