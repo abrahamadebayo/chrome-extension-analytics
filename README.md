@@ -177,6 +177,15 @@ chrome-extension-analytics
 
    The tests are organized alongside the components they verify, following the feature-based architecture pattern.
 
+## Continuous Integration
+
+The project includes a GitHub Actions workflow that automatically runs tests on pull requests and pushes to main branches:
+
+- **Frontend Tests**: Runs Jest tests for React components and services
+- **Backend Tests**: Runs pytest for FastAPI endpoints and services
+
+This ensures code quality is maintained and prevents breaking changes from being merged.
+
 ### Usage
 
 - **Data Collection:**  
