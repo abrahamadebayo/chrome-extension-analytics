@@ -43,19 +43,29 @@ chrome-extension-analytics
 │   │   ├── features/          # Feature-based modules
 │   │   │   ├── analytics/     # Analytics feature components and context
 │   │   │   │   ├── components/
+│   │   │   │   │   ├── __tests__/         # Tests for analytics components
+│   │   │   │   │   │   └── AnalyticsPanel.test.tsx
 │   │   │   │   │   └── AnalyticsPanel.tsx  # Displays current page metrics
+│   │   │   │   ├── __tests__/             # Tests for analytics context
+│   │   │   │   │   └── analytics-context.test.tsx
 │   │   │   │   └── analytics-context.tsx   # State management for analytics
 │   │   │   └── history/       # History feature components
 │   │   │       └── components/
+│   │   │           ├── __tests__/         # Tests for history components
+│   │   │           │   └── VisitHistory.test.tsx
 │   │   │           └── VisitHistory.tsx    # Lists past visit records
-│   │   ├── shared/            # Shared components and utilities
-│   │   │   ├── components/    # Reusable UI components
-│   │   │   ├── hooks/         # Custom React hooks
-│   │   │   └── utils/         # Utility functions
 │   │   ├── services/          # API and other services
 │   │   │   └── api/           # API client and endpoints
+│   │   │       ├── __tests__/             # Tests for API services
+│   │   │       │   └── analytics-api.test.ts
 │   │   │       ├── api-client.ts      # Axios instance with interceptors
 │   │   │       └── analytics-api.ts   # Analytics API methods
+│   │   ├── shared/            # Shared components and utilities
+│   │   │   ├── components/    # Reusable UI components
+│   │   │   │   └── __tests__/         # Tests for shared components
+│   │   │   ├── hooks/         # Custom React hooks
+│   │   │   └── utils/         # Utility functions
+│   │   ├── setupTests.ts      # Jest setup file
 │   │   ├── types/             # TypeScript type definitions
 │   │   ├── styles/            # Global styles
 │   │   │   └── App.css        # Styles for the React application
@@ -152,6 +162,20 @@ chrome-extension-analytics
    ```
 
    This will start a local development server, which you can access at [http://localhost:3000](http://localhost:3000). Note that changes made here must be rebuilt (`npm run build`) to update the extension.
+
+6. **Run Tests:**
+
+   The frontend includes a comprehensive test suite for components, services, and integration tests:
+
+   ```bash
+   # Run all tests
+   npm test
+   
+   # Run tests with coverage report
+   npm run test:coverage
+   ```
+
+   The tests are organized alongside the components they verify, following the feature-based architecture pattern.
 
 ### Usage
 

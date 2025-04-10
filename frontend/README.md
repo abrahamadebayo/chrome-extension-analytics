@@ -82,6 +82,52 @@ Below is a preview of the Chrome Extension Analytics in action:
 
 ![Chrome Extension Preview](public/images/extension-preview.png)
 
+## Testing
+
+The project includes a comprehensive test suite built with React Testing Library and Jest:
+
+- **Unit Tests**: Test individual components and utilities
+- **Integration Tests**: Test feature interactions
+- **API Mocking**: Mock API responses for deterministic tests
+
+### Running Tests
+
+To run the test suite:
+
+```bash
+# Run all tests
+npm test
+
+# Run tests with coverage report
+npm run test:coverage
+
+# Run tests in watch mode 
+npm test -- --watch
+```
+
+### Test Coverage
+
+We maintain high test coverage across critical application paths:
+
+- API Services: Request handling and error management
+- Context Providers: State management and data flow
+- UI Components: Rendering and user interactions
+- Error Handling: Fallbacks and recovery mechanisms
+
+### Testing Architecture
+
+Tests are organized alongside the components they verify:
+```
+├── features/
+│   ├── analytics/
+│   │   ├── components/
+│   │   │   ├── __tests__/         # Component tests
+│   │   ├── __tests__/             # Feature tests
+├── services/
+│   ├── api/
+│   │   ├── __tests__/             # API service tests
+```
+
 ## Requirements
 
 - Node.js v14+ and npm v6+ (or yarn)
