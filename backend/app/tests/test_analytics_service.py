@@ -1,8 +1,5 @@
 import pytest
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
-
-from app.core.database import Base
+import pytest_asyncio
 from app.core.schemas import VisitCreate
 from app.services.analytics_service import (
     create_or_update_visit_service,
@@ -11,26 +8,9 @@ from app.services.analytics_service import (
     get_all_visits_service,
 )
 
-# Use an in-memory SQLite database for testing.
-DATABASE_URL = "sqlite+aiosqlite:///:memory:"
-
-# Create an async engine and session maker for testing.
-engine = create_async_engine(DATABASE_URL, echo=False)
-AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-
-@pytest.fixture
-async def session():
-    # Create tables before each test.
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    async with AsyncSessionLocal() as session:
-        yield session
-    # Drop tables after the test.
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-
+# Note: The "session" fixture will be provided by conftest.py.
 @pytest.mark.asyncio
-async def test_service_create_or_update_visit(session: AsyncSession):
+async def test_service_create_or_update_visit(session):
     # Create initial visit record.
     visit_data = VisitCreate(
         url="http://example.com/service",
@@ -49,7 +29,7 @@ async def test_service_create_or_update_visit(session: AsyncSession):
     assert updated_visit.link_count == 7
 
 @pytest.mark.asyncio
-async def test_service_get_current_metrics(session: AsyncSession):
+async def test_service_get_current_metrics(session):
     # Initially, no record exists so current metrics should be None.
     current = await get_current_metrics_service(session)
     assert current is None
@@ -67,7 +47,7 @@ async def test_service_get_current_metrics(session: AsyncSession):
     assert current.url == "http://example.com/service_current"
 
 @pytest.mark.asyncio
-async def test_service_get_visit_by_url(session: AsyncSession):
+async def test_service_get_visit_by_url(session):
     # Create a visit for a specific URL.
     visit_data = VisitCreate(
         url="http://example.com/service_detail",
@@ -83,7 +63,7 @@ async def test_service_get_visit_by_url(session: AsyncSession):
     assert visit.link_count == 3
 
 @pytest.mark.asyncio
-async def test_service_get_all_visits(session: AsyncSession):
+async def test_service_get_all_visits(session):
     # Create several visit records with unique URLs.
     urls = [
         "http://example.com/service/1",
@@ -100,7 +80,6 @@ async def test_service_get_all_visits(session: AsyncSession):
         await create_or_update_visit_service(session, visit_data)
 
     visits = await get_all_visits_service(session)
-    # Assuming each URL is unique, there should be one entry per URL.
     assert len(visits) == len(urls)
     returned_urls = {visit.url for visit in visits}
     assert set(urls) == returned_urls

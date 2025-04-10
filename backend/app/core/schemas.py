@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 from typing import List
 
@@ -8,8 +8,13 @@ class VisitBase(BaseModel):
     word_count: int
     image_count: int
 
-class VisitCreate(VisitBase):
-    pass
+class VisitCreate(BaseModel):
+    url: str
+    link_count: int
+    word_count: int
+    image_count: int
+
+    model_config = ConfigDict(from_attributes=True)
 
 class Visit(VisitBase):
     datetime_visited: datetime

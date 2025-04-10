@@ -1,42 +1,41 @@
-# backend/app/tests/test_analytics_repository.py
-
 import pytest
+import pytest_asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
-from app.core.database import Base
-from app.core.models import PageVisit
+from app.db.database import Base
 from app.core.schemas import VisitCreate
 from app.repositories.analytics_repository import (
     create_or_update_visit_repository,
     get_current_metrics_repository,
     get_visit_by_url_repository,
-    get_all_visits_repository
+    get_all_visits_repository,
 )
 
-# Use an in-memory SQLite database for testing.
+# Use an in-memory SQLite database that persists across connections.
 DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
-# Create the async engine and session maker for testing.
-engine = create_async_engine(DATABASE_URL, echo=False)
-AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+engine = create_async_engine(
+    DATABASE_URL,
+    echo=False,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool
+)
+TestingSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
-
-@pytest.fixture
+@pytest_asyncio.fixture(scope="function")
 async def session():
-    # Create tables before each test.
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    async with AsyncSessionLocal() as session:
+    async with TestingSessionLocal() as session:
         yield session
-    # Drop tables after the test.
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
-
 @pytest.mark.asyncio
 async def test_create_or_update_visit(session: AsyncSession):
-    # Create initial visit
+    # Create initial visit record.
     visit_data = VisitCreate(
         url="http://example.com",
         link_count=5,
@@ -47,20 +46,19 @@ async def test_create_or_update_visit(session: AsyncSession):
     assert visit.url == "http://example.com"
     assert visit.total_visits == 1
 
-    # Call again with the same URL to update
+    # Call again with the same URL to update the record.
     updated_visit = await create_or_update_visit_repository(session, visit_data)
     assert updated_visit.url == "http://example.com"
     assert updated_visit.total_visits == 2
     assert updated_visit.link_count == 5
 
-
 @pytest.mark.asyncio
 async def test_get_current_metrics(session: AsyncSession):
-    # Initially, no visit exists so the repository should return None
+    # Initially, no visit exists so current metrics should be None.
     current = await get_current_metrics_repository(session)
     assert current is None
 
-    # Create a visit record and then check current metrics
+    # Create a visit record and then check current metrics.
     visit_data = VisitCreate(
         url="http://example.com",
         link_count=10,
@@ -68,11 +66,9 @@ async def test_get_current_metrics(session: AsyncSession):
         image_count=4
     )
     await create_or_update_visit_repository(session, visit_data)
-
     current = await get_current_metrics_repository(session)
     assert current is not None
     assert current.url == "http://example.com"
-
 
 @pytest.mark.asyncio
 async def test_get_visit_by_url(session: AsyncSession):
@@ -89,7 +85,6 @@ async def test_get_visit_by_url(session: AsyncSession):
     assert visit is not None
     assert visit.url == "http://example.com/test"
     assert visit.link_count == 3
-
 
 @pytest.mark.asyncio
 async def test_get_all_visits(session: AsyncSession):

@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers.analytics import analytics_router
+# Import models to ensure they're loaded
+from app.core import models
 
 app = FastAPI()
 

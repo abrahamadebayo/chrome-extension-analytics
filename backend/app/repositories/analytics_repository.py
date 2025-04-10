@@ -1,6 +1,6 @@
+from datetime import datetime, timezone
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from datetime import datetime
 from app.core.models import PageVisit
 from app.core.schemas import VisitCreate, Visit
 
@@ -12,15 +12,15 @@ async def create_or_update_visit_repository(db: AsyncSession, visit_data: VisitC
     stmt = select(PageVisit).where(PageVisit.url == visit_data.url)
     result = await db.execute(stmt)
     existing_visit = result.scalars().first()
-    
+
     if existing_visit:
         # Update the existing record.
         existing_visit.total_visits += 1
-        existing_visit.datetime_visited = datetime.now(datetime.timezone.utc)
+        existing_visit.datetime_visited = datetime.now(timezone.utc)
         existing_visit.link_count = visit_data.link_count
         existing_visit.word_count = visit_data.word_count
         existing_visit.image_count = visit_data.image_count
-        
+
         await db.commit()
         await db.refresh(existing_visit)
         return existing_visit
@@ -28,7 +28,7 @@ async def create_or_update_visit_repository(db: AsyncSession, visit_data: VisitC
         # Create a new record with total_visits set to 1.
         new_visit = PageVisit(
             url=visit_data.url,
-            datetime_visited=datetime.now(datetime.timezone.utc),
+            datetime_visited=datetime.now(timezone.utc),
             link_count=visit_data.link_count,
             word_count=visit_data.word_count,
             image_count=visit_data.image_count,
@@ -39,27 +39,20 @@ async def create_or_update_visit_repository(db: AsyncSession, visit_data: VisitC
         await db.refresh(new_visit)
         return new_visit
 
-async def get_current_metrics_repository(db: AsyncSession) -> Visit | None:
-    """
-    Retrieves the most recent PageVisit record based on datetime_visited.
-    Returns None if no records exist.
-    """
+async def get_current_metrics_repository(db: AsyncSession) -> PageVisit:
+    """Get the most recent page visit record."""
     stmt = select(PageVisit).order_by(PageVisit.datetime_visited.desc()).limit(1)
     result = await db.execute(stmt)
     return result.scalars().first()
 
-async def get_visit_by_url_repository(db: AsyncSession, url: str) -> Visit | None:
-    """
-    Retrieves the PageVisit record corresponding to the given URL.
-    """
+async def get_visit_by_url_repository(db: AsyncSession, url: str) -> PageVisit:
+    """Get a specific page visit record by URL."""
     stmt = select(PageVisit).where(PageVisit.url == url)
     result = await db.execute(stmt)
     return result.scalars().first()
 
-async def get_all_visits_repository(db: AsyncSession) -> list[Visit]:
-    """
-    Retrieves all PageVisit records from the database.
-    """
-    stmt = select(PageVisit)
+async def get_all_visits_repository(db: AsyncSession, skip: int = 0, limit: int = 100) -> list[PageVisit]:
+    """Get all page visit records with pagination."""
+    stmt = select(PageVisit).offset(skip).limit(limit)
     result = await db.execute(stmt)
     return result.scalars().all()

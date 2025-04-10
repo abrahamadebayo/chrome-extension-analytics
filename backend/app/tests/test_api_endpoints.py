@@ -1,35 +1,10 @@
 import pytest
-from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
-
-from app.core.database import Base, get_db
+import pytest_asyncio
+from httpx import AsyncClient, ASGITransport
 from app.main import app
 
-# Use an in-memory SQLite database for testing.
-DATABASE_URL = "sqlite+aiosqlite:///:memory:"
-
-# Create an async engine and session maker for tests.
-engine = create_async_engine(DATABASE_URL, echo=False)
-TestingSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-
-# Override the get_db dependency to use the test database.
-async def override_get_db():
-    async with TestingSessionLocal() as session:
-        yield session
-
-app.dependency_overrides[get_db] = override_get_db
-
-@pytest.fixture(scope="module")
-async def async_client():
-    # Create the test database schema.
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    async with AsyncClient(app=app, base_url="http://test") as client:
-        yield client
-    # Drop the test database schema after tests.
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+# The async_client fixture is provided by conftest.py.
+# We assume conftest.py has overridden the get_db dependency appropriately.
 
 @pytest.mark.asyncio
 async def test_create_or_update_and_get_current(async_client: AsyncClient):
@@ -56,7 +31,6 @@ async def test_create_or_update_and_get_current(async_client: AsyncClient):
     response_current = await async_client.get("/api/current")
     assert response_current.status_code == 200
     current_data = response_current.json()
-    # The latest record should be from the updated URL.
     assert current_data["url"] == "http://example.com/test"
 
 @pytest.mark.asyncio
@@ -81,7 +55,7 @@ async def test_get_by_url_and_history(async_client: AsyncClient):
     response_history = await async_client.get("/api/history")
     assert response_history.status_code == 200
     history_data = response_history.json()
-    # We expect two unique records now.
+    # Expect two unique records: one for "/test" and one for "/test2".
     assert len(history_data) == 2
     urls = {visit["url"] for visit in history_data}
     assert urls == {"http://example.com/test", "http://example.com/test2"}
