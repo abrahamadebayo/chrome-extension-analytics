@@ -1,13 +1,5 @@
 import React from 'react';
-
-export interface AnalyticsData {
-  datetime_visited: string;
-  url: string;
-  link_count: number;
-  word_count: number;
-  image_count: number;
-  total_visits: number;
-}
+import { AnalyticsData } from '../../../types/analytics';
 
 interface AnalyticsPanelProps {
   data: AnalyticsData;

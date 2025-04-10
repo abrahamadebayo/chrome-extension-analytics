@@ -1,103 +1,64 @@
-import React, { useEffect, useState } from 'react';
-import AnalyticsPanel from './components/AnalyticsPanel';
-import VisitHistory from './components/VisitHistory';
+import React, { useState } from 'react';
+import { AnalyticsProvider, useAnalytics } from './features/analytics/analytics-context';
+import AnalyticsPanel from './features/analytics/components/AnalyticsPanel';
+import VisitHistory from './features/history/components/VisitHistory';
+import Tabs from './shared/components/Tabs/Tabs';
+import Loader from './shared/components/Loader/Loader';
+import ErrorFallback from './shared/components/ErrorFallback/ErrorFallback';
 import './styles/App.css';
 
-export interface AnalyticsData {
-  datetime_visited: string;
-  url: string;
-  link_count: number;
-  word_count: number;
-  image_count: number;
-  total_visits: number;
-}
+const AnalyticsTabs = [
+  { id: 'metrics', label: 'Current Metrics' },
+  { id: 'history', label: 'Visit History' },
+];
 
-export interface Visit {
-  datetime_visited: string;
-  url: string;
-  link_count: number;
-  word_count: number;
-  image_count: number;
-  total_visits: number;
-}
+/**
+ * Main app component with tab navigation
+ */
+const AnalyticsApp: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<string>('metrics');
+  const { currentData, visitHistory, loading, error, refreshData } = useAnalytics();
 
-const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'metrics' | 'history'>('metrics');
-  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
-  const [visitHistory, setVisitHistory] = useState<Visit[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      
-      try {
-        // Fetch current analytics data
-        const metricsResponse = await fetch('http://localhost:8000/api/analytics/current');
-        if (metricsResponse.status !== 404) {
-          if (!metricsResponse.ok) {
-            throw new Error(`HTTP error! status: ${metricsResponse.status}`);
-          }
-          const metricsData = await metricsResponse.json();
-          setAnalyticsData(metricsData);
-        }
-        
-        // Fetch visit history data
-        const historyResponse = await fetch('http://localhost:8000/api/analytics/history');
-        if (!historyResponse.ok && historyResponse.status !== 404) {
-          throw new Error(`HTTP error! status: ${historyResponse.status}`);
-        }
-        if (historyResponse.status !== 404) {
-          const historyData = await historyResponse.json();
-          setVisitHistory(historyData);
-        }
-      } catch (error: any) {
-        console.error("Error fetching data:", error);
-        setError(error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
+  const handleRefresh = () => {
+    refreshData(true); // Force refresh from server
+  };
 
   return (
     <div className="App">
-      <h1>Chrome Analytics</h1>
+      <header className="app-header">
+        <h1>Chrome Analytics</h1>
+        <button 
+          className="refresh-button" 
+          onClick={handleRefresh}
+          disabled={loading}
+          aria-label="Refresh data"
+          title="Refresh data"
+        >
+          ↻
+        </button>
+      </header>
       
-      <div className="tabs">
-        <div 
-          className={`tab ${activeTab === 'metrics' ? 'active' : ''}`}
-          onClick={() => setActiveTab('metrics')}
-        >
-          Current Metrics
-        </div>
-        <div 
-          className={`tab ${activeTab === 'history' ? 'active' : ''}`}
-          onClick={() => setActiveTab('history')}
-        >
-          Visit History
-        </div>
-      </div>
+      <Tabs 
+        tabs={AnalyticsTabs}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
+      
+      {error && (
+        <ErrorFallback 
+          error={error} 
+          retry={() => refreshData(true)}
+          details={import.meta.env.DEV ? `Failed to load data from API: ${error}` : undefined}
+        />
+      )}
       
       {loading ? (
-        <div className="loading">
-          <div className="loading-spinner"></div>
-          <p>Loading analytics data...</p>
-        </div>
-      ) : error ? (
-        <div className="card">
-          <p>Error: {error}</p>
-          <p>Please make sure the backend server is running.</p>
-        </div>
-      ) : (
+        <Loader />
+      ) : !error && (
         <>
           {activeTab === 'metrics' && (
-            analyticsData ? (
-              <AnalyticsPanel data={analyticsData} />
+            currentData ? (
+              <AnalyticsPanel data={currentData} />
             ) : (
               <div className="card empty-state">
                 <p>No analytics data available for the current page.</p>
@@ -112,6 +73,15 @@ const App: React.FC = () => {
         </>
       )}
     </div>
+  );
+};
+
+// Root component with providers
+const App: React.FC = () => {
+  return (
+    <AnalyticsProvider>
+      <AnalyticsApp />
+    </AnalyticsProvider>
   );
 };
 
