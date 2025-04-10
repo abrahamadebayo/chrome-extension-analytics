@@ -2,7 +2,11 @@ import os
 import logging
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
+from dotenv import load_dotenv
 from app.core.models import Base
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Configure logging
 logger = logging.getLogger(__name__)

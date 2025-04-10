@@ -15,13 +15,14 @@ WORKDIR /app
 COPY --from=builder /usr/local/lib/python3.9/site-packages /usr/local/lib/python3.9/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Set environment variables
-ENV DATABASE_URL=postgresql+asyncpg://postgres:mysecretpassword@db:5432/mydatabase
+# Set Python-specific environment variables
+# These are better kept in the Dockerfile as they're related to the runtime, not the application config
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Copy the application code
+# Copy the application code and .env file
 COPY ./app ./app
+COPY ./.env ./.env
 
 # Create and copy the entrypoint script
 COPY ./scripts/entrypoint.sh .
