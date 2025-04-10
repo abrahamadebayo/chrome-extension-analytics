@@ -8,17 +8,22 @@ This project is a Chrome extension that provides analytics on web pages visited 
 chrome-extension-analytics
 ├── backend
 │   ├── app
-│   │   ├── api
-│   │   │   ├── v1
-│   │   │   │   ├── endpoints
-│   │   │   │   │   └── analytics.py   # Analytics API endpoints (create/update, current metrics, history)
-│   │   │   │   └── __init__.py
+│   │   ├── core/
+│   │   │   ├── models.py      # Database models using SQLAlchemy
+│   │   │   ├── schemas.py     # Pydantic schemas for request/response validation
 │   │   │   └── __init__.py
-│   │   ├── database.py        # Database connection and session management
-│   │   ├── main.py            # FastAPI entry point; includes routes and database initialization
-│   │   ├── models.py          # SQLAlchemy models for defining database schema
-│   │   ├── schemas.py         # Pydantic schemas for request/response validation
-│   │   └── __init__.py
+│   │   ├── db/
+│   │   │   ├── database.py    # Database connection and session management
+│   │   │   ├── init_db.py     # Database initialization script
+│   │   │   └── __init__.py
+│   │   ├── repositories/      # Data access layer
+│   │   │   └── analytics_repository.py
+│   │   ├── routers/           # API route definitions
+│   │   │   └── analytics.py   # Analytics endpoints
+│   │   ├── services/          # Business logic layer
+│   │   │   └── analytics_service.py
+│   │   ├── main.py            # FastAPI entry point
+│   │   └── tests/             # Test suite
 │   ├── Dockerfile             # Dockerfile to containerize the FastAPI backend
 │   ├── requirements.txt       # Python package dependencies for the backend
 │   └── README.md              # Backend-specific instructions
@@ -27,21 +32,45 @@ chrome-extension-analytics
 │   ├── node_modules           # Installed npm dependencies
 │   ├── public
 │   │   ├── images
-│   │   │   └── extension_preview.png  # Screenshot of the extension in action
+│   │   │   └── extension_preview-1.png  # Screenshot of the extension in action
+│   │   │   └── extension_preview-2.png  # Screenshot of the extension in action
 │   │   ├── background.js      # Background script for handling extension events
 │   │   ├── content.js         # Content script for extracting page metrics
 │   │   ├── icon.png           # Extension icon
 │   │   ├── index.html         # HTML file for the popup UI
 │   │   └── manifest.json      # Chrome extension manifest
 │   ├── src
-│   │   ├── components
-│   │   │   ├── AnalyticsPanel.tsx  # Displays current page metrics
-│   │   │   └── VisitHistory.tsx    # Lists past visit records
-│   │   ├── styles
+│   │   ├── features/          # Feature-based modules
+│   │   │   ├── analytics/     # Analytics feature components and context
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── __tests__/         # Tests for analytics components
+│   │   │   │   │   │   └── AnalyticsPanel.test.tsx
+│   │   │   │   │   └── AnalyticsPanel.tsx  # Displays current page metrics
+│   │   │   │   ├── __tests__/             # Tests for analytics context
+│   │   │   │   │   └── analytics-context.test.tsx
+│   │   │   │   └── analytics-context.tsx   # State management for analytics
+│   │   │   └── history/       # History feature components
+│   │   │       └── components/
+│   │   │           ├── __tests__/         # Tests for history components
+│   │   │           │   └── VisitHistory.test.tsx
+│   │   │           └── VisitHistory.tsx    # Lists past visit records
+│   │   ├── services/          # API and other services
+│   │   │   └── api/           # API client and endpoints
+│   │   │       ├── __tests__/             # Tests for API services
+│   │   │       │   └── analytics-api.test.ts
+│   │   │       ├── api-client.ts      # Axios instance with interceptors
+│   │   │       └── analytics-api.ts   # Analytics API methods
+│   │   ├── shared/            # Shared components and utilities
+│   │   │   ├── components/    # Reusable UI components
+│   │   │   │   └── __tests__/         # Tests for shared components
+│   │   │   ├── hooks/         # Custom React hooks
+│   │   │   └── utils/         # Utility functions
+│   │   ├── setupTests.ts      # Jest setup file
+│   │   ├── types/             # TypeScript type definitions
+│   │   ├── styles/            # Global styles
 │   │   │   └── App.css        # Styles for the React application
 │   │   ├── App.tsx            # Main React component for the analytics UI
-│   │   ├── index.tsx          # Entry point for the React app
-│   │   └── react-app-env.d.ts # TypeScript environment definitions
+│   │   └── index.tsx          # Entry point for the React app
 │   ├── package.json           # npm configuration file with build and development scripts
 │   ├── tsconfig.json          # TypeScript configuration file
 │   └── README.md              # Frontend-specific instructions
@@ -134,6 +163,29 @@ chrome-extension-analytics
 
    This will start a local development server, which you can access at [http://localhost:3000](http://localhost:3000). Note that changes made here must be rebuilt (`npm run build`) to update the extension.
 
+6. **Run Tests:**
+
+   The frontend includes a comprehensive test suite for components, services, and integration tests:
+
+   ```bash
+   # Run all tests
+   npm test
+   
+   # Run tests with coverage report
+   npm run test:coverage
+   ```
+
+   The tests are organized alongside the components they verify, following the feature-based architecture pattern.
+
+## Continuous Integration
+
+The project includes a GitHub Actions workflow that automatically runs tests on pull requests and pushes to main branches:
+
+- **Frontend Tests**: Runs Jest tests for React components and services
+- **Backend Tests**: Runs pytest for FastAPI endpoints and services
+
+This ensures code quality is maintained and prevents breaking changes from being merged.
+
 ### Usage
 
 - **Data Collection:**  
@@ -149,9 +201,11 @@ chrome-extension-analytics
 
 ### Chrome Extension Preview
 
-Below is a preview of the Chrome Extension Analytics in action:
+Below are previews of the Chrome Extension Analytics in action:
 
-![Chrome Extension Preview](frontend/public/images/extension_preview.png)
+![Chrome Extension Preview](frontend/public/images/extension_preview-1.png)
+
+![Chrome Extension Preview](frontend/public/images/extension_preview-2.png)
 
 ## Notes
 
