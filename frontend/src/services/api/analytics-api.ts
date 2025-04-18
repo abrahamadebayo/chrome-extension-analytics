@@ -82,22 +82,18 @@ export const analyticsApi = {
 
   deleteAllHistory: async (): Promise<{ status: string; message: string; data?: any }> => {
     try {
-      // Try the alternative endpoint if the main one is giving 405 errors
-      const response = await apiClient.delete('/analytics/delete-all');
+      // Use the new simplified endpoint path
+      const response = await apiClient.delete('/analytics/purge');
       return response.data;
     } catch (error) {
-      console.error('Failed to delete history (first attempt):', error);
+      console.error('Failed to delete history with DELETE method:', error);
       
+      // Fallback to the GET method on the same endpoint
       try {
-        // Fallback to test endpoint if needed
-        const testResponse = await apiClient.delete('/test-delete');
-        console.log('Test delete response:', testResponse);
-        
-        // Try original endpoint again
-        const response = await apiClient.delete('/analytics/history');
+        const response = await apiClient.get('/analytics/purge');
         return response.data;
-      } catch (secondError) {
-        console.error('Failed to delete history (all attempts):', secondError);
+      } catch (fallbackError) {
+        console.error('Failed to delete history with GET method:', fallbackError);
         throw error;
       }
     }

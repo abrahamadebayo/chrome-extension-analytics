@@ -35,14 +35,29 @@ app.add_middleware(
 # Include the analytics router with a prefix
 app.include_router(analytics_router, prefix="/api/analytics")
 
-# Add a direct test DELETE endpoint to main.py for debugging
-@app.delete("/api/test-delete", status_code=status.HTTP_200_OK)
-async def test_delete():
+# Print all registered routes for debugging
+for route in app.routes:
+    print(f"ROUTE: {route.path} [{','.join(route.methods)}]")
+
+# Add a GET endpoint for deletion instead of DELETE
+@app.get("/api/clear-history", status_code=status.HTTP_200_OK)
+async def clear_history():
     """
-    Test DELETE endpoint directly on the main app
+    Alternative GET endpoint to handle history deletion
     """
-    logger.info("Test DELETE endpoint called")
-    return {"status": "success", "message": "DELETE method working"}
+    from app.services.analytics_service import delete_all_visits_service
+    from app.db.database import AsyncSessionLocal
+    
+    logger.info("GET /api/clear-history endpoint called")
+    
+    # Get a database session
+    async with AsyncSessionLocal() as session:
+        try:
+            await delete_all_visits_service(session)
+            return {"status": "success", "message": "All visit records deleted successfully"}
+        except Exception as e:
+            logger.exception(f"Error clearing history: {str(e)}")
+            return {"status": "error", "message": str(e)}
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):

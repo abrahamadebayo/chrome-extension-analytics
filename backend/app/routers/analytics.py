@@ -1,3 +1,6 @@
+import sys
+print(">>> analytics_router loaded", file=sys.stderr)
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
@@ -58,6 +61,61 @@ async def get_current_metrics(db: AsyncSession = Depends(get_db)):
             detail=f"Failed to get current metrics: {str(e)}"
         )
 
+@analytics_router.get("/history", response_model=List[Visit], status_code=status.HTTP_200_OK)
+async def get_visit_history(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
+    """
+    Get historical visit data with pagination.
+    """
+    try:
+        return await get_all_visits_service(db, skip, limit)
+    except Exception as e:
+        logger.exception(f"Error retrieving visit history: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get visit history: {str(e)}"
+        )
+
+@analytics_router.delete("/purge", response_model=dict, status_code=status.HTTP_200_OK)
+async def delete_all_visits(db: AsyncSession = Depends(get_db)):
+    """
+    Delete all page visit records.
+    """
+    logger.info("DELETE /purge endpoint called")
+    try:
+        result = await delete_all_visits_service(db)
+        return {
+            "status": "success", 
+            "message": "All visit records deleted successfully",
+            "data": result
+        }
+    except Exception as e:  
+        logger.exception(f"Error deleting all visits: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete all visits: {str(e)}"
+        )
+
+@analytics_router.get("/purge", response_model=dict, status_code=status.HTTP_200_OK)
+async def clear_history(db: AsyncSession = Depends(get_db)):
+    """
+    GET endpoint to delete all page visit records.
+    Provides an alternative to DELETE for environments where DELETE might be blocked.
+    """
+    logger.info("GET /purge endpoint called")
+    try:
+        result = await delete_all_visits_service(db)
+        return {
+            "status": "success", 
+            "message": "All visit records deleted successfully",
+            "data": result
+        }
+    except Exception as e:  
+        logger.exception(f"Error deleting all visits: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete all visits: {str(e)}"
+        )
+
 @analytics_router.get("/url/{url:path}", response_model=Optional[Visit], status_code=status.HTTP_200_OK)
 async def get_visit_by_url(url: str, db: AsyncSession = Depends(get_db)):
     """
@@ -82,55 +140,9 @@ async def get_visit_by_url(url: str, db: AsyncSession = Depends(get_db)):
             detail=f"Failed to get metrics for URL: {str(e)}"
         )
 
-@analytics_router.get("/history", response_model=List[Visit], status_code=status.HTTP_200_OK)
-async def get_visit_history(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
+@analytics_router.get("/test-alive", status_code=200)
+async def test_alive():
     """
-    Get historical visit data with pagination.
+    Simple endpoint to verify router is mounted and accessible.
     """
-    try:
-        return await get_all_visits_service(db, skip, limit)
-    except Exception as e:
-        logger.exception(f"Error retrieving visit history: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get visit history: {str(e)}"
-        )
-
-@analytics_router.delete("/history", response_model=dict, status_code=status.HTTP_200_OK, operation_id="delete_all_visits")
-async def delete_all_visits(db: AsyncSession = Depends(get_db)):
-    """
-    Delete all page visit records.
-    """
-    logger.info("DELETE /history endpoint called")
-    try:
-        await delete_all_visits_service(db)
-        logger.info("Successfully deleted all visits")
-        return {
-            "status": "success", 
-            "message": "All visit records deleted successfully"
-        }
-    except Exception as e:  
-        logger.exception(f"Error deleting all visits: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to delete all visits: {str(e)}"
-        )
-
-@analytics_router.delete("/delete-all", response_model=dict, status_code=status.HTTP_200_OK)
-async def delete_all_visits_alt(db: AsyncSession = Depends(get_db)):
-    """
-    Alternative endpoint to delete all page visit records.
-    """
-    logger.info("DELETE /delete-all endpoint called")
-    try:
-        await delete_all_visits_service(db)
-        return {
-            "status": "success", 
-            "message": "All visit records deleted successfully"
-        }
-    except Exception as e:  
-        logger.exception(f"Error deleting all visits: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to delete all visits: {str(e)}"
-        )
+    return {"status": "ok"}

@@ -27,12 +27,24 @@ const AnalyticsApp: React.FC = () => {
   const handleDelete = async () => {
     if (window.confirm('Are you sure you want to delete the history?')) {
       try {
-        await analyticsApi.deleteAllHistory();
-        alert('History deleted successfully');
+        const response = await analyticsApi.deleteAllHistory();
+        console.log('Delete response:', response); // Log the actual response
+        
+        if (response && response.status === "success") {
+          alert('History deleted successfully');
+        } else {
+          alert('History may not have been fully deleted. Please refresh to verify.');
+        }
+        
         refreshData(true); // Refresh data after deletion
       } catch (error) {
         console.error('Error deleting history:', error);
-        alert('Failed to delete history. Please try again.');
+        
+        // More descriptive error message
+        alert('Failed to delete history. The service might be experiencing issues.');
+        
+        // Still try to refresh to show current state
+        refreshData(true);
       }
     }
   }
