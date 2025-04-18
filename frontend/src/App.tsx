@@ -6,6 +6,7 @@ import Tabs from './shared/components/Tabs/Tabs';
 import Loader from './shared/components/Loader/Loader';
 import ErrorFallback from './shared/components/ErrorFallback/ErrorFallback';
 import './styles/App.css';
+import { analyticsApi } from './services/api/analytics-api';
 
 const AnalyticsTabs = [
   { id: 'metrics', label: 'Current Metrics' },
@@ -23,6 +24,19 @@ const AnalyticsApp: React.FC = () => {
     refreshData(true); // Force refresh from server
   };
 
+  const handleDelete = async () => {
+    if (window.confirm('Are you sure you want to delete the history?')) {
+      try {
+        await analyticsApi.deleteAllHistory();
+        alert('History deleted successfully');
+        refreshData(true); // Refresh data after deletion
+      } catch (error) {
+        console.error('Error deleting history:', error);
+        alert('Failed to delete history. Please try again.');
+      }
+    }
+  }
+
   // Use process.env.NODE_ENV instead of import.meta.env.DEV
   const isDevelopment = process.env.NODE_ENV === 'development';
 
@@ -38,6 +52,15 @@ const AnalyticsApp: React.FC = () => {
           title="Refresh data"
         >
           ↻
+        </button>
+        <button 
+          className="delete-button danger"
+          onClick={handleDelete}
+          aria-label="Delete all history"
+          title="Delete all history"
+          disabled={loading || visitHistory.length === 0}
+        >
+          <span role="img" aria-hidden="true">🗑️</span>
         </button>
       </header>
       

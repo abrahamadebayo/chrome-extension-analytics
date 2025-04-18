@@ -10,7 +10,8 @@ from app.services.analytics_service import (
     create_or_update_visit_service,
     get_current_metrics_service,
     get_visit_by_url_service,
-    get_all_visits_service
+    get_all_visits_service,
+    delete_all_visits_service
 )
 
 # Configure logging
@@ -93,4 +94,43 @@ async def get_visit_history(skip: int = 0, limit: int = 100, db: AsyncSession = 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get visit history: {str(e)}"
+        )
+
+@analytics_router.delete("/history", response_model=dict, status_code=status.HTTP_200_OK, operation_id="delete_all_visits")
+async def delete_all_visits(db: AsyncSession = Depends(get_db)):
+    """
+    Delete all page visit records.
+    """
+    logger.info("DELETE /history endpoint called")
+    try:
+        await delete_all_visits_service(db)
+        logger.info("Successfully deleted all visits")
+        return {
+            "status": "success", 
+            "message": "All visit records deleted successfully"
+        }
+    except Exception as e:  
+        logger.exception(f"Error deleting all visits: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete all visits: {str(e)}"
+        )
+
+@analytics_router.delete("/delete-all", response_model=dict, status_code=status.HTTP_200_OK)
+async def delete_all_visits_alt(db: AsyncSession = Depends(get_db)):
+    """
+    Alternative endpoint to delete all page visit records.
+    """
+    logger.info("DELETE /delete-all endpoint called")
+    try:
+        await delete_all_visits_service(db)
+        return {
+            "status": "success", 
+            "message": "All visit records deleted successfully"
+        }
+    except Exception as e:  
+        logger.exception(f"Error deleting all visits: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete all visits: {str(e)}"
         )

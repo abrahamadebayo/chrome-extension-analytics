@@ -7,7 +7,8 @@ from app.repositories.analytics_repository import (
     create_or_update_visit_repository,
     get_current_metrics_repository,
     get_visit_by_url_repository,
-    get_all_visits_repository
+    get_all_visits_repository,
+    delete_all_visits_repository
 )
 from app.core.models import PageVisit
 
@@ -59,4 +60,16 @@ async def get_all_visits_service(db: AsyncSession, skip: int = 0, limit: int = 1
         return await get_all_visits_repository(db, skip, limit)
     except Exception as e:
         logger.error(f"Error in get_all_visits_service: {str(e)}")
+        raise
+
+async def delete_all_visits_service(db: AsyncSession) -> None:
+    """
+    Service layer for deleting all visit records.
+    """
+    logger.info("Deleting all visits")
+    try:
+        await delete_all_visits_repository(db)
+        logger.info("Successfully deleted all visits")
+    except Exception as e:
+        logger.error(f"Error in delete_all_visits_service: {str(e)}")
         raise

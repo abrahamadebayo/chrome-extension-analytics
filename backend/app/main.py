@@ -28,12 +28,21 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 
 # Include the analytics router with a prefix
 app.include_router(analytics_router, prefix="/api/analytics")
+
+# Add a direct test DELETE endpoint to main.py for debugging
+@app.delete("/api/test-delete", status_code=status.HTTP_200_OK)
+async def test_delete():
+    """
+    Test DELETE endpoint directly on the main app
+    """
+    logger.info("Test DELETE endpoint called")
+    return {"status": "success", "message": "DELETE method working"}
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):

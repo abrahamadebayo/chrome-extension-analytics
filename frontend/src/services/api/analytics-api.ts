@@ -78,5 +78,29 @@ export const analyticsApi = {
     ]);
     
     return { current, history };
-  }
+  },
+
+  deleteAllHistory: async (): Promise<{ status: string; message: string; data?: any }> => {
+    try {
+      // Try the alternative endpoint if the main one is giving 405 errors
+      const response = await apiClient.delete('/analytics/delete-all');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to delete history (first attempt):', error);
+      
+      try {
+        // Fallback to test endpoint if needed
+        const testResponse = await apiClient.delete('/test-delete');
+        console.log('Test delete response:', testResponse);
+        
+        // Try original endpoint again
+        const response = await apiClient.delete('/analytics/history');
+        return response.data;
+      } catch (secondError) {
+        console.error('Failed to delete history (all attempts):', secondError);
+        throw error;
+      }
+    }
+  },
+
 };

@@ -58,3 +58,13 @@ async def get_all_visits_repository(db: AsyncSession, skip: int = 0, limit: int 
     stmt = select(PageVisit).offset(skip).limit(limit)
     result = await db.execute(stmt)
     return result.scalars().all()
+
+async def delete_all_visits_repository(db: AsyncSession):
+    """Delete all page visit records."""
+    stmt = select(PageVisit)
+    result = await db.execute(stmt)
+    visits = result.scalars().all()
+    for visit in visits:
+        await db.delete(visit)
+    await db.commit()
+    return "All visits deleted successfully"
